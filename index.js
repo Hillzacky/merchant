@@ -10,8 +10,8 @@ function endPoint() {
 }
 
 /**
-`https://www.g****e.com/maps/place/Cisaat,+Sukabumi+Regency,+West+Java/@-6.902101,106.8871728,13z/`
-`https://www.g****e.com/maps/search/kedai+kopi/@-6.8890102,106.873541,13z`
+`https://www.google.com/maps/place/Cisaat,+Sukabumi+Regency,+West+Java/@-6.902101,106.8871728,13z/`
+`https://www.google.com/maps/search/kedai+kopi/@-6.8890102,106.873541,13z`
 **/
 
 async function run() {
@@ -22,7 +22,7 @@ async function run() {
   // await loadState(page, 'networkidle');
   let feed = await page.$("[role='feed']")
   // await waitNetwork(page, { idleTime: 1800 });
-  // await waitForScrollFeed(page, 10);
+  await waitForScrollFeed(page, 8);
   let card = await feed.$$('.hfpxzc');
   const processedTitles = new Set();
   const results = [];
@@ -30,10 +30,9 @@ async function run() {
   // Process cards one by one with proper async handling
   for (const c of card) {
     try {
-      await c.click();
-					await rest(6000,9000);
+      await c.click(); await rest(6000,9000);
       const ov = 'div.bJzME.Hu9e2e.tTVLSc > div > div.e07Vkf.kA9KIf > div > div';
-      // await waitSelector(page, ov, {timeout: 5000});
+      await waitSelector(page, ov, {timeout: 5000});
       const overview = await page.$(ov);
       
       if (overview) {
@@ -44,10 +43,13 @@ async function run() {
         if (processedTitles.has(title)) continue;
         processedTitles.add(title);
   
+	const ie = await overview.$$("button[data-item-id]");
         const infoElements = await overview.$$("button[data-item-id] > div > div > div.fontBodyMedium");
-        const addr = infoElements.length > 0 ? await infoElements[0].textContent() : "No address";
-        const phone = infoElements.length > 1 ? await infoElements[1].textContent() : "No phone";
-        const pluscode = infoElements.length > 2 ? await infoElements[2].textContent() : "No code";
+	const alamat = ie[0].ariaLabel.split(":")[1].trim()
+	const kontak = [...ie].find(d=>d.dataset.itemId.includes(":")).dataset.itemId.split(":")[2];
+        const addr = alamat.length > 0 ? await alamat : "No address";
+        const phone = kontak.length > 0 ? await alamat : "No phone";
+        const pluscode = infoElements.length > 0 ? await infoElements[2].textContent() : "No code";
         
         // Simpan ke array results
         results.push({ title, addr, phone, pluscode });
