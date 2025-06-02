@@ -548,4 +548,4 @@ async function run() {
 }
 
 
-export { openBrowser, closeBrowser, waitForScrollFeed, save, load, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState }
+export { openBrowser, closeBrowser, waitForScrollFeed, save, load, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState, rest }
