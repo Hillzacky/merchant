@@ -1,5 +1,5 @@
 import * as browser from './browser.js';
-const { openBrowser, closeBrowser, save, load, scroll, qs, qaAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState } = browser;
+const { openBrowser, closeBrowser, waitForScrollFeed, save, load, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState } = browser;
 
 function endPoint() {
 	const url = 'https://www.google.com/maps/search'
@@ -15,25 +15,55 @@ function endPoint() {
 **/
 
 async function run() {
-  const b = await openBrowser();
-  const page = await b.newPage();
+  const ob = await openBrowser();
+  const ctx = ob.newContext();
+  const page = await ob.newPage();
   await page.goto(endPoint());
-  await loadState(page, 'networkidle');
+  // await loadState(page, 'networkidle');
   let feed = await page.$("[role='feed']")
   // await waitNetwork(page, { idleTime: 1800 });
-  // await scroll(page, "[role='feed']")
-  let card = await feed.$$('hfpxzc');
-  card.forEach(c => {
-   c.click();
-  	const ov = 'div.bJzME.Hu9e2e.tTVLSc > div > div.e07Vkf.kA9KIf > div > div';
-	waitSelector(page, ov, {timeout: 5000});
-	const overview = page.$(ov);
-	const title = overview.$("h1")?.textContent();
-	const [ addr, phone, pluscode ] = overview.$$("button[data-item-id] > div > div > div.fontBodyMedium");
-	console.log(title, addr, phone, pluscode)
-  })
-
-  await closeBrowser(browser);
+  await waitForScrollFeed(page, 10);
+  let card = await feed.$$('.hfpxzc');
+  const processedTitles = new Set();
+  const results = [];
+  
+  // Process cards one by one with proper async handling
+  for (const c of card) {
+    try {
+      await c.click();
+      const ov = 'div.bJzME.Hu9e2e.tTVLSc > div > div.e07Vkf.kA9KIf > div > div';
+      await waitSelector(page, ov, {timeout: 5000});
+      const overview = await page.$(ov);
+      
+      if (overview) {
+        const titleElement = await overview.$("h1");
+        const title = titleElement ? await titleElement.textContent() : "No title";
+        
+        // Skip jika title sudah ada
+        if (processedTitles.has(title)) continue;
+        processedTitles.add(title);
+  
+        const infoElements = await overview.$$("button[data-item-id] > div > div > div.fontBodyMedium");
+        const addr = infoElements.length > 0 ? await infoElements[0].textContent() : "No address";
+        const phone = infoElements.length > 1 ? await infoElements[1].textContent() : "No phone";
+        const pluscode = infoElements.length > 2 ? await infoElements[2].textContent() : "No code";
+        
+        // Simpan ke array results
+        results.push({ title, addr, phone, pluscode });
+        console.log(`Processed: ${title}`);
+      }
+    } catch (error) {
+      console.error("Error processing card:", error);
+    }
+  }
+  console.log('\nHasil Akhir:');
+  results.forEach((item, index) => {
+    console.log(`\n${index + 1}. ${item.title}`);
+    console.log(`   Alamat: ${item.addr}`);
+    console.log(`   Telepon: ${item.phone}`);
+    console.log(`   Plus Code: ${item.pluscode}`);
+  }); 
+  await closeBrowser(ob);
 }
 
 run();
