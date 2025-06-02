@@ -257,7 +257,7 @@ async function openBrowser(options = {}) {
               // Attempt 3: Minimal options as last resort
               console.log('Trying with absolute minimal options...');
               const lastResortOptions = {
-                headless: true,
+                headless: false,
                 args: ['--no-sandbox'],
                 timeout: 30000, // Extended timeout
                 ignoreDefaultArgs: ['--disable-dev-shm-usage']
@@ -506,8 +506,8 @@ async function waitNetwork(page, options = {}) {
 }
 
 async function rest(min = 5000, max = 10000){
-		const rand = Math.random() * (max - min) + min;
-		return new Promise((r) => setTimeout(r, rand))
+  const rand = Math.random() * (max - min) + min;
+  return new Promise((r) => setTimeout(r, rand))
 }
 
 async function run() {
