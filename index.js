@@ -20,8 +20,8 @@ async function run() {
   await page.goto(endPoint());
   await loadState(page, 'networkidle');
   let feed = await page.$("[role='feed']")
-  await waitNetwork(page, { idleTime: 1800 });
-  await scroll(page, "[role='feed']")
+  // await waitNetwork(page, { idleTime: 1800 });
+  // await scroll(page, "[role='feed']")
   let card = await feed.$$('hfpxzc');
   card.forEach(c => {
    c.click();
