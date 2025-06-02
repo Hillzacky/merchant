@@ -22,7 +22,7 @@ async function run() {
   // await loadState(page, 'networkidle');
   let feed = await page.$("[role='feed']")
   // await waitNetwork(page, { idleTime: 1800 });
-  await waitForScrollFeed(page, 10);
+  // await waitForScrollFeed(page, 10);
   let card = await feed.$$('.hfpxzc');
   const processedTitles = new Set();
   const results = [];
