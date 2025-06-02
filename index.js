@@ -1,5 +1,5 @@
 import * as browser from './browser.js';
-const { openBrowser, closeBrowser, waitForScrollFeed, save, load, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState } = browser;
+const { openBrowser, closeBrowser, waitForScrollFeed, save, load, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState, rest } = browser;
 
 function endPoint() {
 	const url = 'https://www.google.com/maps/search'
@@ -31,8 +31,9 @@ async function run() {
   for (const c of card) {
     try {
       await c.click();
+					await rest(6000,9000);
       const ov = 'div.bJzME.Hu9e2e.tTVLSc > div > div.e07Vkf.kA9KIf > div > div';
-      await waitSelector(page, ov, {timeout: 5000});
+      // await waitSelector(page, ov, {timeout: 5000});
       const overview = await page.$(ov);
       
       if (overview) {
