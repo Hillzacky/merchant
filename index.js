@@ -25,7 +25,7 @@ async function getData(url) {
   // await loadState(page, 'networkidle');
   let feed = await page.$('[role="feed"]', { timeout: 3500 })
   // await waitNetwork(page, { idleTime: 1800 });
-  await waitForScrollFeed(page, process.env.SET_SCROLL ?? 3);
+  // await waitForScrollFeed(page, process.env.SET_SCROLL ?? 3);
   let card = await feed.$$('.hfpxzc');
   const processedTitles = new Set();
   const results = [];
