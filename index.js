@@ -1,11 +1,14 @@
 import * as browser from './browser.js';
-const { openBrowser, closeBrowser, waitForScrollFeed, save, load, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState, rest } = browser;
+const { openBrowser, closeBrowser, waitForScrollFeed, scroll, qs, qsAll, getClassName, getText, getHtml, waitSelector, waitNetwork, loadState, rest } = browser;
+import { getPosition, saveAsCsv, save, load, webpath } from './utils.js';
 
-function endPoint() {
+function buildUrl(find, area, myLongLat) {
 	const url = 'https://www.google.com/maps/search'
-	const find = 'kedai kopi'
-	const area = ', Cikole, Sukabumi'
-	const myLongLat = '@-6.8890102,106.873541,13z'
+	return url + '/' + encodeURI(find + area) + '/' + myLongLat
+}
+
+function endPoint(find, myLongLat) {
+	const url = 'https://www.google.com/maps/search'
 	return url + '/' + encodeURI(find) + '/' + myLongLat
 }
 
@@ -14,20 +17,19 @@ function endPoint() {
 `https://www.google.com/maps/search/kedai+kopi/@-6.8890102,106.873541,13z`
 **/
 
-async function run() {
+async function getData(url) {
   const ob = await openBrowser();
   const ctx = ob.newContext();
   const page = await ob.newPage();
-  await page.goto(endPoint());
+  await page.goto(url);
   // await loadState(page, 'networkidle');
   let feed = await page.$("[role='feed']")
   // await waitNetwork(page, { idleTime: 1800 });
-  await waitForScrollFeed(page, 8);
+  await waitForScrollFeed(page, process.env.SET_SCROLL ?? 3);
   let card = await feed.$$('.hfpxzc');
   const processedTitles = new Set();
   const results = [];
   
-  // Process cards one by one with proper async handling
   for (const c of card) {
     try {
       await c.click(); await rest(6000,9000);
@@ -39,34 +41,65 @@ async function run() {
         const titleElement = await overview.$("h1");
         const title = titleElement ? await titleElement.textContent() : "No title";
         
-        // Skip jika title sudah ada
         if (processedTitles.has(title)) continue;
         processedTitles.add(title);
   
-	const ie = await overview.$$("button[data-item-id]");
-        const infoElements = await overview.$$("button[data-item-id] > div > div > div.fontBodyMedium");
-	const alamat = ie[0].ariaLabel.split(":")[1].trim()
-	const kontak = [...ie].find(d=>d.dataset.itemId.includes(":")).dataset.itemId.split(":")[2];
-        const addr = alamat.length > 0 ? await alamat : "No address";
-        const phone = kontak.length > 0 ? await alamat : "No phone";
-        const pluscode = infoElements.length > 0 ? await infoElements[2].textContent() : "No code";
-        
-        // Simpan ke array results
-        results.push({ title, addr, phone, pluscode });
+	      const ie = await overview.$$("button[data-item-id]");
+        const alamat = await ie[0].getAttribute('aria-label')
+	      const kontak = async (ar)=>{
+          let kontak = "";
+          for (let btn of ar) {
+            const itemId = await btn.getAttribute("data-item-id");
+            if (itemId && itemId.includes(":")) {
+              const parts = itemId.split(":");
+              if (parts.length > 2) {
+                kontak = parts[2];
+                break;
+              }
+            }
+          }
+          return kontak.replace("-", "");
+	      }
+        const addr = alamat && alamat.length > 0 ? alamat.split(":")[1].trim() : "No address";
+        const phone = await kontak(ie);
+        results.push({ title, addr, phone });
         console.log(`Processed: ${title}`);
       }
     } catch (error) {
       console.error("Error processing card:", error);
     }
   }
+  await save(results);
+  await saveAsCsv(results);
+  await closeBrowser(ob);
+}
+
+function viewResult(results) {
   console.log('\nHasil Akhir:');
   results.forEach((item, index) => {
     console.log(`\n${index + 1}. ${item.title}`);
     console.log(`   Alamat: ${item.addr}`);
     console.log(`   Telepon: ${item.phone}`);
-    console.log(`   Plus Code: ${item.pluscode}`);
   }); 
-  await closeBrowser(ob);
 }
 
-run();
+async function getMultipleData(find) {
+  const file = webpath('kecamatan_sukabumi.csv');
+  const dataList = getPosition(file);
+  for(let i=0;i < dataList.length; i++){
+    const uri = endPoint(find, dataList[i].myLongLat);
+    console.info('Processing: ' + uri)
+    await getData(uri)
+  }
+  console.info("worrking complete.")
+}
+
+const find = process.env.SET_SEARCH ?? "Toko";
+const bulk = process.env.SET_BULK ?? true;
+const headless = process.env.SET_HEADLESS ?? true;
+
+try {
+  bulk ? getMultipleData(find) : getData(endPoint(find, "@-6.9351394,106.9323303,13z"));
+} catch (err) {
+  throw err;
+}
