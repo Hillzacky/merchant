@@ -13,8 +13,8 @@ function endPoint(find, myLongLat) {
 }
 
 /**
-`https://www.google.com/maps/place/Cisaat,+Sukabumi+Regency,+West+Java/@-6.902101,106.8871728,13z/`
-`https://www.google.com/maps/search/kedai+kopi/@-6.8890102,106.873541,13z`
+`https://www.******.com/maps/place/Cisaat,+Sukabumi+Regency,+West+Java/@-6.902101,106.8871728,13z/`
+`https://www.******.com/maps/search/kedai+kopi/@-6.8890102,106.873541,13z`
 **/
 
 async function getData(url) {
