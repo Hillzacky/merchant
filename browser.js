@@ -172,7 +172,7 @@ async function closeBrowser(browser) {
 
 async function scroll(page, selector) {
   try {
-    await page.waitForSelector(selector, { timeout: 1500, state: 'attached' });
+    await page.waitForSelector(selector, { timeout: 2800, state: 'attached' });
     await page.evaluate(async(selector) => {
       const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       const element = document.querySelector(selector);
